@@ -22,9 +22,33 @@ class ViewController: UIViewController {
 
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         let url = URL(string: "https://cx-yyz-1251125656.cos.ap-shanghai.myqcloud.com/10_1_8_190/Dynamic/6827109415774b5d45ef6432.jpeg")
-        img.kf.setImage(with: url)
+        //img.kf.setImage(with: url)
+        
+        // 长图使用
         //img.kf.setImage(with: url, options: [.processor(GrayscaleImageProcessor(hwRatio: 1))])
+        
+        // 正常的图可以使用
+        let processor = DownsamplingImageProcessor(size: CGSize(width: 800, height: 800))
+        img.kf.setImage(with: url, placeholder: nil, options: [.processor(processor)])
     }
+    
+    
+    /// 原图如果是1000 * 1000 我们写100 * 100 会生成100* 100 的位图
+    func downsample(imageAt imageURL: URL, to pointSize: CGSize, scale: CGFloat) -> UIImage {
+        let sourceOpt = [kCGImageSourceShouldCache : false] as CFDictionary
+        // 其他场景可以用createwithdata (data并未decode,所占内存没那么大),
+        let source = CGImageSourceCreateWithURL(imageURL as CFURL, sourceOpt)!
+        
+        let maxDimension = max(pointSize.width, pointSize.height) * scale
+        let downsampleOpt = [kCGImageSourceCreateThumbnailFromImageAlways : true,
+                                     kCGImageSourceShouldCacheImmediately : true ,
+                               kCGImageSourceCreateThumbnailWithTransform : true,
+                                      kCGImageSourceThumbnailMaxPixelSize : maxDimension] as CFDictionary
+        let downsampleImage = CGImageSourceCreateThumbnailAtIndex(source, 0, downsampleOpt)!
+        
+        return UIImage(cgImage: downsampleImage)
+    }
+    
 }
 
 
@@ -158,4 +182,4 @@ struct GrayscaleImageProcessor: ImageProcessor {
      }
  }
 
- */
+
