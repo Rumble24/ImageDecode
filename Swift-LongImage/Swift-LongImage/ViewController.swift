@@ -3,7 +3,7 @@
 //  Swift-LongImage
 //
 //  Created by jingwei on 2025/7/29.
-//
+//  参考：https://blog.devlxx.com/2022/02/15/iOS%E5%9B%BE%E7%89%87%E6%98%BE%E7%A4%BA%E5%8E%9F%E7%90%86%E4%B8%8E%E4%BC%98%E5%8C%96%E6%80%9D%E8%B7%AF/
 
 import UIKit
 import Kingfisher
