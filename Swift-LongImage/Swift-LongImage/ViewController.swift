@@ -20,25 +20,42 @@ class ViewController: UIViewController {
         KingfisherManager.shared.cache.clearCache()
     }
 
+    // MARK: - 原理就是 只解码需要的部分 不需要的部分全部舍弃
+    /*
+     解码代码
+     1。kCGImageSourceShouldCacheImmediately设置为true，创建缩略图时会直接解码
+     2。SDWebImage/YYWebImage 调用 -  CGBitmapContextCreate
+        sd - + (CGImageRef)CGImageCreateDecoded:(CGImageRef)cgImage orientation:(CGImagePropertyOrientation)orientation
+        yy - YYCGImageCreateDecodedCopy
+     3.KingFisher - UIGraphicsBeginImageContextWithOptions - 最终也是调用的CGBitmapContextCreate。
+        public func decoded(scale: CGFloat) -> KFCrossPlatformImage {
+     */
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         let url = URL(string: "https://cx-yyz-1251125656.cos.ap-shanghai.myqcloud.com/10_1_8_190/Dynamic/6827109415774b5d45ef6432.jpeg")
-        //img.kf.setImage(with: url)
         
-        // 长图使用
-        //img.kf.setImage(with: url, options: [.processor(GrayscaleImageProcessor(hwRatio: 1))])
+        // 内存占用 73.3
+        // img.kf.setImage(with: url)
         
-        // 正常的图可以使用
+        // 长图使用 // 内存占用 22.5
+        // img.kf.setImage(with: url, options: [.processor(GrayscaleImageProcessor(hwRatio: 1))])
+        
+        // 正常的图可以使用  相当于 对分辨率进行压缩
         let processor = DownsamplingImageProcessor(size: CGSize(width: 800, height: 800))
         img.kf.setImage(with: url, placeholder: nil, options: [.processor(processor)])
     }
     
     
+    /*
+     另外，之前提到的DownSampling这些第三方网络框架都支持。在SDWebImage框架中，通过context设置SDWebImageContextImageThumbnailPixelSize即可调整采样。
+     DownSampling（降低采样）
+     */
     /// 原图如果是1000 * 1000 我们写100 * 100 会生成100* 100 的位图
     func downsample(imageAt imageURL: URL, to pointSize: CGSize, scale: CGFloat) -> UIImage {
         let sourceOpt = [kCGImageSourceShouldCache : false] as CFDictionary
         // 其他场景可以用createwithdata (data并未decode,所占内存没那么大),
         let source = CGImageSourceCreateWithURL(imageURL as CFURL, sourceOpt)!
         
+        // kCGImageSourceShouldCacheImmediately设置为true，创建缩略图时会直接解码
         let maxDimension = max(pointSize.width, pointSize.height) * scale
         let downsampleOpt = [kCGImageSourceCreateThumbnailFromImageAlways : true,
                                      kCGImageSourceShouldCacheImmediately : true ,
@@ -88,7 +105,7 @@ struct GrayscaleImageProcessor: ImageProcessor {
         }
         let cropRect = CGRect(x: 0, y: 0, width: pixelWidth, height: pixelWidth * hwRatio)
         
-        // 4. 先获取完整图像（仅解码一次）
+        // 4. 创建一个未解码的 CGImage
         guard let fullImage = CGImageSourceCreateImageAtIndex(imageSource, 0, nil) else { return nil }
         guard let croppedCGImage = fullImage.cropping(to: cropRect) else {
             return nil
@@ -182,4 +199,4 @@ struct GrayscaleImageProcessor: ImageProcessor {
      }
  }
 
-
+*/
